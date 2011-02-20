@@ -1,3 +1,7 @@
+#pragma once
+#ifndef BGC_HEADER_DEFINED
+#define BGC_HEADER_DEFINED 1
+
 typedef struct group_output_header {
     int num_files;              /* number of files output is distributed into */
     int file_id;                /* this files ID (number) if multiple files are output */
@@ -160,6 +164,6 @@ bgc_format_includes_be( int format_id )
     return ( format_id % 10 ) == 5;
 }
 
-#define BINARY_OUTPUT_INCLUDED 1
+#endif
 
 // vim: ts=8 sw=4 sts=4 expandtab

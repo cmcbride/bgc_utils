@@ -3,25 +3,65 @@
 #include <stdio.h>
 #include <assert.h>
 
-#ifndef BINARY_OUTPUT_INCLUDED
-#include "bgc.h"
-#endif
+static int BGC_VERBOSE = 0;     /* make this 1 to increase verbosity for debugging, etc. */
 
+/* Easy unformatted FORTRAN reading, with some sanity checking. 
+ * Usage like C fread. but returns size of main object read in or "0" on an error */
+size_t
+ftread( void *restrict ptr, size_t size, size_t nitems, FILE * restrict stream )
+{
+    int nbyte1, nbyte2;
 
-static int BGC_VERBOSE = 0;
+    size_t nitem1;
+
+    size_t res;
+
+    char *msg_init = "ftread error";
+
+    /* unformatted data FORMAT, typically 4-byte boundaries */
+    res = fread( &nbyte1, sizeof( int ), 1, stream );
+    if( res != 1 ) {
+        fprintf( stderr, "%s: file empty? \n", msg_init );
+        perror( msg_init );
+        return ( res );
+    }
+    nitem1 = fread( ptr, size, nitems, stream );
+    if( nitem1 != nitems ) {
+        fprintf( stderr, "%s: %lu items expected, %lu items read. \n", msg_init, nitems, nitem1 );
+    }
+    res = fread( &nbyte2, sizeof( int ), 1, stream );
+    if( res != 1 ) {
+        fprintf( stderr, "%s: file too short? \n", msg_init );
+        perror( msg_init );
+        return ( res );
+    }
+    if( nbyte1 != nbyte2 ) {
+        fprintf( stderr,
+                 "%s: byte paddings do not match, nbyte1 = %i, nbyte2 = %i \n",
+                 msg_init, nbyte1, nbyte2 );
+        return ( 0 );
+    }
+    if( ( size_t ) nbyte1 != size * nitems ) {
+        fprintf( stderr,
+                 "%s: expected byte size does not match item*size nbyte = %i, size = %lu, nitems = %lu\n",
+                 msg_init, nbyte1, size, nitems );
+        return ( 0 );
+    }
+
+    return ( size_t ) nbyte1;
+}
+
+// size_t fwrite(const void *restrict ptr, size_t size, size_t nitems, FILE *restrict stream);
+
 
 void
 bgc_read_header( FILE * fp, OUTPUT_HEADER * hdr )
 {
-    int pad;
+    int size;
 
     assert( fp != 0 );
-
-    fread( &pad, sizeof( int ), 1, fp );
-    assert( pad == 1024 );
-    fread( hdr, sizeof( OUTPUT_HEADER ), 1, fp );
-    fread( &pad, sizeof( int ), 1, fp );
-    assert( pad == 1024 );
+    size = ( int )ftread( hdr, sizeof( OUTPUT_HEADER ), 1, fp );
+    assert( size == OUTPUT_HEADER_SIZE );
 
     if( BGC_VERBOSE ) {
         printf( "READING HEADER INFORMATION:\n" );
@@ -36,23 +76,19 @@ bgc_read_header( FILE * fp, OUTPUT_HEADER * hdr )
 int *
 bgc_read_grouplist( FILE * fp, const OUTPUT_HEADER hdr )
 {
-    int i, pad;
+    int i, size;
 
     int *nParticlesPerGroup;
 
     nParticlesPerGroup = calloc( hdr.ngroups + 1, sizeof( int ) );
     assert( nParticlesPerGroup != NULL );
 
-    fread( &pad, sizeof( int ), 1, fp );
-    for( i = 0; i < hdr.ngroups; i++ ) {
-        int tmp;
+    ftread( nParticlesPerGroup, sizeof( int ), hdr.ngroups, fp );
 
-        fread( &tmp, sizeof( int ), 1, fp );
-        nParticlesPerGroup[i] = tmp;
-        if( BGC_VERBOSE )
-            printf( " grp %4d: %5d\n", ( i + hdr.first_group_id ), tmp );
-    }
-    fread( &pad, sizeof( int ), 1, fp );
+    if( BGC_VERBOSE )
+        for( i = 0; i < hdr.ngroups; i++ ) {
+            printf( " grp %4d: %5d\n", ( i + hdr.first_group_id ), nParticlesPerGroup[i] );
+        }
 
     return nParticlesPerGroup;
 }
@@ -61,23 +97,14 @@ bgc_read_grouplist( FILE * fp, const OUTPUT_HEADER hdr )
 void *
 bgc_read_particles( FILE * fp, const unsigned int npart, const int pdata_format )
 {
-    int pad;
-
     void *pd;
-
-    size_t res;
 
     size_t size = bgc_sizeof_pdata( pdata_format );
 
-    pd = malloc( npart * size );
+    pd = calloc( npart * size );
     assert( pd != NULL );
 
-    fread( &pad, sizeof( int ), 1, fp );
-    assert( pad == npart * size );
-    res = fread( pd, size, npart, fp );
-    assert( res == npart );
-    fread( &pad, sizeof( int ), 1, fp );
-    assert( pad == npart * size );
+    ftread( pd, size, npart, fp );
 
     return ( void * )pd;
 }
@@ -86,22 +113,25 @@ bgc_read_particles( FILE * fp, const unsigned int npart, const int pdata_format 
 void
 bgc_read_part_into( FILE * fp, const unsigned int npart, const int pdata_format, void *pdata )
 {
-    int pad;
-
-    size_t res;
-
     size_t size = bgc_sizeof_pdata( pdata_format );
 
     assert( pdata != NULL );
-
-    fread( &pad, sizeof( int ), 1, fp );
-    assert( pad == npart * size );
-    res = fread( pdata, size, npart, fp );
-    assert( res == npart );
-    fread( &pad, sizeof( int ), 1, fp );
-    assert( pad == npart * size );
+    ftread( pd, size, npart, fp );
 
     return;
+}
+
+/* skip over group without reading it */
+int
+bgc_skip_particles( FILE * fp, const unsigned int npart, const int pdata_format )
+{
+    size_t size = bgc_sizeof_pdata( pdata_format );
+
+    long offset;
+
+    offset = npart * size + 2 * sizeof( int );
+
+    return fseek( fp, offset, SEEK_CUR );
 }
 
 void
