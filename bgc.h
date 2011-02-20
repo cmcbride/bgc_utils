@@ -59,6 +59,13 @@ enum pdata_format {
     PDATA_FORMAT_GPVM = 50
 };
 
+static inline int
+bgc_format_includes_be( int format_id )
+{
+    /* this MUST be kept in sync with the above enum defining the formats */
+    return ( format_id % 10 ) == 5;
+}
+
 typedef struct {
     unsigned int part_id;
 } PARTICLE_DATA_ID;
@@ -155,13 +162,6 @@ bgc_sizeof_pdata( const int pdata_format )
         break;
     }
     return size;
-}
-
-static inline int
-bgc_format_includes_be( int format_id )
-{
-    /* this MUST be kept in sync with the above enum defining the formats */
-    return ( format_id % 10 ) == 5;
 }
 
 #endif
