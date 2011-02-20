@@ -1,56 +1,149 @@
 
-DESCRIPTION:
-------------
-(fofsv/utils subdirectory)
+BINARY GROUP CATALOG FORMAT: 
+----------------------------
+BGC (binary group catalog) is an adhoc format that was hashed out on the 
+LasDamas mailing list and designed to address several issues:
+ - native binary endian-ness (checkable via initial 4-bytes = 1024)
+ - single catalog spread over multiple files
+ - easily readable by both fortran and C codes
+ - informative comprehensive header (allows consistency checks)
+ - relatively efficient means to store particles
 
-These are simple utilities to compare different halo catalog outputs and for development 
-testing (like checking the size of the header).
+This format typically includes data on ALL particles found within groups.
+Data for a single group is never straddled across different files.  
+
+The general format of the file:
+ HEADER
+ GROUP_LIST
+ PARTICLE_DATA
+
+The HEADER and GROUP_LIST are always formatted the same.  PARTICLE_DATA can vary 
+based on what one wants to store (e.g. just IDs, ID and BE for each group member, 
+or full positions and velocities -- see following section).  These include the 
+4-byte padding for easy fortran reading.  
+
+FORTRAN routines must use implicit loops in the read statement.  For example, 
+something like the following would read the ID_BE particle_data format for a 10 
+member group stored in a file.
+
+    integer*4 id(10)
+    real*4    be(10)
+    open (1, file='pdata.bin', form='unformatted')
+    read (1) (id(i),be(i),i=1,10)
+    close (1)
+
+Please note, this example skips reading the HEADER and GROUP_LIST.  Although
+my FORTRAN is quite rusty, more examples can be provided on request if this is
+not clear.
+
+The general idea is that the HEADER (of fixed size) contains information to 
+allocate and read GROUP_LIST, and both combined covers everything necessary to 
+process the PARTICLE_DATA blocks.
+
+For C, the best documentation is the source.  Please see: 
+    bgc.h
+    bgc_read_utils.c
+    bgc_write_utils.c
+
+
+BGC PARTICLE_DATA FORMATS:
+--------------------------
+The following formats for particle data are listed below, and control what information
+is stored for each particle within a group.  See "bgc.h" for more details.
+
+    ID    : particle ids only
+    IDBE  : particle ids with binding energy
+    POS   : positions and particle ids
+    POSBE : (last) + binding energy
+    PV    : positions and velocities with particle ids
+    PVBE  : (last) + binding energy
+    PVM   : positions, velocities and individual masses (and particle ids)
+    PVMBE : (last) + binding energy
+
+
+FILE DESCRIPTIONS:
+------------------
+bgc.h
+    definition of BGC structures, and generic functions.
 
 bgc_read_utils.c 
-    some useful reading utilities that can be used directly.  Kind of like a crude library.
+    some useful reading utilities that can be used directly.  
+    Kind of like a crude library, meant to be #include'd
 
-calc_group_stats.c
-    takes BGC output and creates ASCII group statistics (like COM position, velocity and velocity 
-    dispersion).
-
-compare_grp_with_idbe.c
-    compare the grp tipsy array format (from UW FOF) with BGC IDBE output.
-    
-compare_two_grps.c
-    compares two grp files in a line-by-line method so it works on LARGE files.
-
-dump_group_pdata.c
-    outputs ASCII dump of particles in a specific halo (group_id).  This is helpful for debugging 
-    and if one wants quick access to particle data.
-
-header_test_sizeof.c
-    verifies BGC header information is correctly sized on this platform.
-
-read_bgc_idbe.c
-    example that reads the BGC IDBE format (hard coded).  Verbosely outputs status to the screen.
-    
-read_bgc_pdata.c
-    reads through a BGC output file to ensure that the size is correct.  Uses header information to 
-    check how much to read.  Does nothing with the actual particle data beyond checking that the 
-    correct amount exists.  *NOTE* if you want to increase the verbosity of this for debugging, set 
-    BGC_VERBOSE = 1;  // around line 29 
+bgc_write_utils.c
+    some useful writing utilities, 
 
 
 USING BGC_UTILS IN C CODE:
 -------------------------
 A good example of using the functions in bgc_read_utils.c can be seen in: 
-    fofsv/utils/calc_group_stats.c
+    utils/calc_stats_com.c
 
-These read utilities aren't a proper library.  They are just a couple quick hack routines
-pulled into a separate file.  To use them, I recommend the following:
-    1) copy fofsv/binary_output.h  to your source directory
-    2) copy fofsv/utils/bgc_read_utils.c to your source directory
-    3) add these lines of header (order is important!):
+The read utilities are not a "proper" library.  They are just a couple quick routines
+pulled into a separate file.  Recommended use is to:
+    1) copy bgc.h to your source directory
+    2) copy bgc_read_utils.c (or the write version) to your source directory
+    3) include the files within your code, for example: 
 
-	#include "binary_output.h"
-	#include "bgc_read_utils.c"
+        #include "bgc.h"
+        #include "bgc_read_utils.c"
 
-    4) code (and don't compile as .o files)
+    4) write your code (and don't compile as .o files)
 
-If you'd prefer to use a different path for these files, it should work fine.
+If you would prefer to use a different paths for these files, that should work fine.
 
+
+BGC UTILITIES:
+--------------
+There are a couple simple utilites and example code that use the BGC 
+binary output format.  Please look in the subdirectory: utils/
+
+Short descriptions for a subsample of the codes:
+
+calc_stats_com.c
+calc_stats_dpp.c
+    Calculates group statistics for each group based on partile data, 
+    such as center position, center-of-mass velocity, and velocity 
+    dispersion.  
+        COM: group center is center-of-mass (fast)
+        DPP: group center is deepest potential particle (slow N^2)
+    BGC format file input, simple ASCII output.  Does no unit conversion, 
+    and preserves units of BGC input (length / velocity)
+        
+compare_grp_with_id.c
+compare_grp_with_idbe.c
+    compare the "grp tipsy array format" (from UW FOF) with BGC output.
+    
+compare_two_grps.c
+    compares two grp files in a line-by-line method so it works on 
+    LARGE files.
+
+dump_group_pdata.c
+    outputs ASCII dump of particles in a specific halo (group_id).  This 
+    is helpful for debugging and if one wants quick access to particle 
+    data.
+
+header_test_sizeof.c
+    verifies BGC header information is correctly sized on this platform.
+
+read_bgc_header.c
+    read and print BGC header information, kind of a useful "head"-like 
+    utility for BGC files.
+
+read_bgc_idbe.c
+    Example that reads the BGC IDBE format (hard coded).  Verbosely 
+    outputs status to the screen.
+    
+read_bgc_pdata.c
+    reads through a BGC output file to ensure that the size is correct.  
+    It uses header information to check how much to read, which is a 
+    simple cross check.  Does nothing with the actual particle data beyond 
+    ensuring it's the correct size. 
+
+
+=====
+Questions, comments, suggestions, and/or updates are very welcome. 
+
+Cameron McBride
+cameron.mcbride@gmail.com
+February 2011
