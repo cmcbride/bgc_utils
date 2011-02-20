@@ -1,0 +1,56 @@
+
+DESCRIPTION:
+------------
+(fofsv/utils subdirectory)
+
+These are simple utilities to compare different halo catalog outputs and for development 
+testing (like checking the size of the header).
+
+bgc_read_utils.c 
+    some useful reading utilities that can be used directly.  Kind of like a crude library.
+
+calc_group_stats.c
+    takes BGC output and creates ASCII group statistics (like COM position, velocity and velocity 
+    dispersion).
+
+compare_grp_with_idbe.c
+    compare the grp tipsy array format (from UW FOF) with BGC IDBE output.
+    
+compare_two_grps.c
+    compares two grp files in a line-by-line method so it works on LARGE files.
+
+dump_group_pdata.c
+    outputs ASCII dump of particles in a specific halo (group_id).  This is helpful for debugging 
+    and if one wants quick access to particle data.
+
+header_test_sizeof.c
+    verifies BGC header information is correctly sized on this platform.
+
+read_bgc_idbe.c
+    example that reads the BGC IDBE format (hard coded).  Verbosely outputs status to the screen.
+    
+read_bgc_pdata.c
+    reads through a BGC output file to ensure that the size is correct.  Uses header information to 
+    check how much to read.  Does nothing with the actual particle data beyond checking that the 
+    correct amount exists.  *NOTE* if you want to increase the verbosity of this for debugging, set 
+    BGC_VERBOSE = 1;  // around line 29 
+
+
+USING BGC_UTILS IN C CODE:
+-------------------------
+A good example of using the functions in bgc_read_utils.c can be seen in: 
+    fofsv/utils/calc_group_stats.c
+
+These read utilities aren't a proper library.  They are just a couple quick hack routines
+pulled into a separate file.  To use them, I recommend the following:
+    1) copy fofsv/binary_output.h  to your source directory
+    2) copy fofsv/utils/bgc_read_utils.c to your source directory
+    3) add these lines of header (order is important!):
+
+	#include "binary_output.h"
+	#include "bgc_read_utils.c"
+
+    4) code (and don't compile as .o files)
+
+If you'd prefer to use a different path for these files, it should work fine.
+
