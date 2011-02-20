@@ -4,7 +4,7 @@
 #include <assert.h>
 
 #ifndef BINARY_OUTPUT_INCLUDED
-#include "../binary_output.h"
+#include "bgc.h"
 #endif
 
 
