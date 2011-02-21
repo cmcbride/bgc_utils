@@ -53,9 +53,6 @@ ftread( void *ptr, size_t size, size_t nitems, FILE * stream )
     return ( size_t ) nbyte1;
 }
 
-// size_t fwrite(const void *restrict ptr, size_t size, size_t nitems, FILE *restrict stream);
-
-
 void
 bgc_read_header( FILE * fp, OUTPUT_HEADER * hdr )
 {
