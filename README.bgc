@@ -71,44 +71,52 @@ bgc_read_utils.c
     Kind of like a crude library, meant to be #include'd
 
 bgc_write_utils.c
-    some useful writing utilities, 
+    some useful writing utilities, similar to bgc_read_utils.c.
 
 
 USING BGC_UTILS IN C CODE:
 -------------------------
-A good example of using the functions in bgc_read_utils.c can be seen in: 
-    utils/calc_stats_com.c
-
 The read utilities are not a "proper" library.  They are just a couple quick routines
 pulled into a separate file.  Recommended use is to:
     1) copy bgc.h to your source directory
     2) copy bgc_read_utils.c (or the write version) to your source directory
     3) include the files within your code, for example: 
 
-        #include "bgc.h"
         #include "bgc_read_utils.c"
+	AND / OR 
+        #include "bgc_write_utils.c"
 
-    4) write your code (and don't compile as .o files)
+    4) write your code (do not try to compile libraries as .o files)
 
 If you would prefer to use a different paths for these files, that should work fine.
 
 
 BGC UTILITIES:
 --------------
-There are a couple simple utilites and example code that use the BGC 
+There are a couple simple utilities and example code that use the BGC 
 binary output format.  Please look in the subdirectory: utils/
 
 Short descriptions for a subsample of the codes:
 
-calc_stats_com.c
-calc_stats_dpp.c
-    Calculates group statistics for each group based on partile data, 
+bgc_read_header.c
+    read and print BGC header information, kind of a useful "head"-like 
+    utility for BGC files.
+
+bgc_stats_com.c
+bgc_stats_dpp.c
+    Calculates group statistics for each group based on particle data, 
     such as center position, center-of-mass velocity, and velocity 
     dispersion.  
         COM: group center is center-of-mass (fast)
         DPP: group center is deepest potential particle (slow N^2)
     BGC format file input, simple ASCII output.  Does no unit conversion, 
     and preserves units of BGC input (length / velocity)
+
+bgc_test_pdata.c
+    reads through a BGC output file to ensure that the size is correct.  
+    It uses header information to check how much to read, which is a 
+    simple cross check.  Does nothing with the actual particle data beyond 
+    ensuring it's the correct size. 
         
 compare_grp_with_id.c
 compare_grp_with_idbe.c
@@ -118,27 +126,17 @@ compare_two_grps.c
     compares two grp files in a line-by-line method so it works on 
     LARGE files.
 
-dump_group_pdata.c
+bgc_dump_group_pdata.c
     outputs ASCII dump of particles in a specific halo (group_id).  This 
     is helpful for debugging and if one wants quick access to particle 
     data.
 
-header_test_sizeof.c
+bgc_header_size.c
     verifies BGC header information is correctly sized on this platform.
 
-read_bgc_header.c
-    read and print BGC header information, kind of a useful "head"-like 
-    utility for BGC files.
-
-read_bgc_idbe.c
-    Example that reads the BGC IDBE format (hard coded).  Verbosely 
-    outputs status to the screen.
-    
-read_bgc_pdata.c
-    reads through a BGC output file to ensure that the size is correct.  
-    It uses header information to check how much to read, which is a 
-    simple cross check.  Does nothing with the actual particle data beyond 
-    ensuring it's the correct size. 
+bgc_copy_test.c
+    reads in (ala bgc_test_pdata.c) and outputs a copy of the BGC format 
+    to test the writing utilities
 
 
 =====
