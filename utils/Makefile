@@ -1,34 +1,47 @@
 CC=gcc
-OPT= -Wall -O3 -lm 
+CFLAGS= -Wall -O3 -lm 
+MOPT= -funroll-loops
+# READING LIBRARIES
+RLIBS=bgc.h bgc_read_utils.c
 
+# first, let's list the useful utilities
+all : bgc_read_header bgc_test_pdata bgc_stats_com bgc_stats_dpp 
 
-calc_stats_com : calc_stats_com.c bgc_read_utils.c 
-	${CC} -Wall -O2 -o $@ -lm $@.c
+bgc_read_header : bgc_read_header.c $(RLIBS)
+	${CC} $(CFLAGS) -o $@ $@.c
 
-calc_stats_dpp : calc_stats_dpp.c bgc_read_utils.c 
-	${CC} -Wall -O3 -funroll-loops -o $@ -lm $@.c
+bgc_test_pdata : bgc_test_pdata.c $(RLIBS)
+	${CC} $(CFLAGS) -o $@ $@.c
 
-dump_group_pdata : dump_group_pdata.c bgc_read_utils.c 
-	${CC} -Wall -O2 -o $@ -lm $@.c
+bgc_stats_com : bgc_stats_com.c $(RLIBS) 
+	${CC} $(CFLAGS) -o $@ $@.c
 
-compare_grp_with_idbe : compare_grp_with_idbe.c bgc_read_utils.c 
-	${CC} -Wall -O2 -o $@ -lm $@.c
+bgc_stats_dpp : bgc_stats_dpp.c $(RLIBS) 
+	${CC} $(CFLAGS) $(MOPT) -o $@ $@.c
 
-compare_two_grps : compare_two_grps.c bgc_read_utils.c 
-	${CC} -Wall -O2 -o $@ -lm $@.c
+# the rest of these are testing, old examples or more specific utilites
+bgc_header_size: bgc_header_size.c $(RLIBS) 
+	${CC} $(CFLAGS) -o $@ $@.c
 
-bgc_test_header : bgc_header_test.c bgc_read_utils.c
-	${CC} -Wall -o $@ $@.c
+bgc_dump_group_pdata : bgc_dump_group_pdata.c $(RLIBS) 
+	${CC} $(CFLAGS) -o $@ $@.c
 
-bgc_test_read_idbe : read_bgc_idbe.c bgc_read_utils.c
-	${CC} -Wall -o $@ read_bgc_idbe.c
+bgc_readsave_idbe : bgc_readsave_idbe.c $(RLIBS) 
+	${CC} $(CFLAGS) -o $@ $@.c
 
-bgc_test_pdata : bgc_test_pdata.c bgc_read_utils.c
-	${CC} -Wall -o $@ read_bgc_pdata.c
+compare_grp_with_id : compare_grp_with_id.c $(RLIBS)
+	${CC} $(CFLAGS) -o $@ $@.c
 
-bgc_read_header : bgc_read_header.c bgc_read_utils.c
-	${CC} -Wall -o $@ $@.c
+compare_grp_with_idbe : compare_grp_with_idbe.c $(RLIBS)
+	${CC} $(CFLAGS) -o $@ $@.c
 
-all : read_test bgc_read_header calc_stats_com calc_stats_dpp
+compare_two_grps : compare_two_grps.c 
+	${CC} $(CFLAGS) -o $@ $@.c
+
+everything: all bgc_header_size bgc_dump_group_pdata bgc_readsave_idbe compare_grp_with_id compare_grp_with_idbe compare_two_grps
+
 clean :
-	-rm -f calc_stats_com calc_stats_dpp compare_grp_idbe compare_two_grps read_idbe_test read_test header_test dump_group_pdata read_bgc_header
+	-rm -f bgc_read_header bgc_test_pdata bgc_stats_com bgc_stats_dpp \
+	       bgc_header_size bgc_dump_group_pdata bgc_readsave_idbe \
+	       compare_grp_with_id compare_grp_with_idbe compare_two_grps
+

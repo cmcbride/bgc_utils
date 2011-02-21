@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
-#include "bgc_read_utils.c"
 
 
 /* this utility just reads a SINGLE BGC file to verify the size matches: 
@@ -10,6 +9,7 @@
  *  - it reads all groups to ensure the file isn't truncated 
  *  - it does nothing with this particle data
  * */
+#include "bgc_read_utils.c"
 
 
 void

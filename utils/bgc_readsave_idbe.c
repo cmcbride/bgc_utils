@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
-#include "bgc_read_utils.c"
 
+#include "bgc_read_utils.c"
 
 OUTPUT_HEADER hdr;
 

@@ -1,8 +1,9 @@
 #include <stdio.h>
-#include "../binary_output.h"
+
+#include "bgc_read_utils.c"
 
 int
-main(  )
+main( int argc, char **argv )
 {
     printf( "Testing various type sizes:\n" );
     printf( "  int:           %zu bytes\n", sizeof( int ) );

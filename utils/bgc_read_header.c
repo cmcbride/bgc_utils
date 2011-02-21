@@ -1,10 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
-#include "bgc_read_utils.c"
-
 
 /* this utility just does a quick read and dump of the BGC file header * */
+
+#include "bgc_read_utils.c"
+
 
 int
 main( int argc, char **argv )

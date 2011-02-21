@@ -9,7 +9,6 @@
 #endif
 
 #define VERBOSE 0
-#include "../binary_output.h"
 #include "bgc_read_utils.c"
 
 /* We calculate a proxy for the gravitational potential energy to find the position of the halo 

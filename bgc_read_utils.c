@@ -3,12 +3,14 @@
 #include <stdio.h>
 #include <assert.h>
 
+#include "bgc.h"
+
 static int BGC_VERBOSE = 0;     /* make this 1 to increase verbosity for debugging, etc. */
 
 /* Easy unformatted FORTRAN reading, with some sanity checking. 
  * Usage like C fread. but returns size of main object read in or "0" on an error */
 size_t
-ftread( void *restrict ptr, size_t size, size_t nitems, FILE * restrict stream )
+ftread( void *ptr, size_t size, size_t nitems, FILE * stream )
 {
     int nbyte1, nbyte2;
 
@@ -76,7 +78,7 @@ bgc_read_header( FILE * fp, OUTPUT_HEADER * hdr )
 int *
 bgc_read_grouplist( FILE * fp, const OUTPUT_HEADER hdr )
 {
-    int i, size;
+    int i;
 
     int *nParticlesPerGroup;
 
@@ -101,7 +103,7 @@ bgc_read_particles( FILE * fp, const unsigned int npart, const int pdata_format 
 
     size_t size = bgc_sizeof_pdata( pdata_format );
 
-    pd = calloc( npart * size );
+    pd = calloc( npart, size );
     assert( pd != NULL );
 
     ftread( pd, size, npart, fp );
@@ -109,14 +111,15 @@ bgc_read_particles( FILE * fp, const unsigned int npart, const int pdata_format 
     return ( void * )pd;
 }
 
-/* Read particle data for one group. One must cast the result appropriately */
+/* Read particle data for one group into *pdata.  Assumes memory is properly allocated to 
+ * contain FULL data.  One must cast the result appropriately to use it */
 void
 bgc_read_part_into( FILE * fp, const unsigned int npart, const int pdata_format, void *pdata )
 {
     size_t size = bgc_sizeof_pdata( pdata_format );
 
     assert( pdata != NULL );
-    ftread( pd, size, npart, fp );
+    ftread( pdata, size, npart, fp );
 
     return;
 }
