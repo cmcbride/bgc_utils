@@ -98,7 +98,7 @@ calc_stats_dpp( FILE * fp, const OUTPUT_HEADER hdr, const double eps )
                     // assert( abs(del) < plength_check );
                     r2 += del * del;
                 }
-                pot += 1.0 / sqrt( r2 * r2 + eps * eps );
+                pot += 1.0 / sqrt( r2 + eps * eps );
             }
 
 
